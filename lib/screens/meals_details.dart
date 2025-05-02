@@ -1,27 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:meals_app/models/meal.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:meals_app/providers/favorites_provider.dart';
 
-class MealsDetailsScreen extends StatelessWidget {
+class MealsDetailsScreen extends ConsumerWidget {
   const MealsDetailsScreen({
-    super.key, 
+    super.key,
     required this.meal,
-    required this.onToggleFavorite,
-    });
+    // required this.onToggleFavorite,
+  });
 
   final Meal meal;
-  final void Function(Meal meal) onToggleFavorite;
+  //final void Function(Meal meal) onToggleFavorite;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final favoriteMeals = ref.watch(favoriteMealsProvider);
+
+    final isFavorite = favoriteMeals.contains(meal);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(meal.title),
         actions: [
           IconButton(
             onPressed: () {
-              onToggleFavorite(meal);
+              final wasAdded = ref
+                  .read(favoriteMealsProvider.notifier)
+                  .toggleMealFavoritesStatus(meal);
+              ScaffoldMessenger.of(context).clearSnackBars();
+              ScaffoldMessenger.of(context,).showSnackBar(
+                SnackBar(content: Text(
+                  wasAdded ? 'Meal added as a favorite.' 
+                  : 'Meal removed as favorite.',
+                  ),
+                ),
+              );
             },
-            icon: const Icon(Icons.star),
+            icon: Icon( isFavorite ? Icons.star : Icons.star_border),
           ),
         ],
       ),
@@ -61,7 +77,10 @@ class MealsDetailsScreen extends StatelessWidget {
             const SizedBox(height: 14),
             for (final step in meal.steps)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 child: Text(
                   step,
                   textAlign: TextAlign.center,
